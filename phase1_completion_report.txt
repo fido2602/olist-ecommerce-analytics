@@ -1,0 +1,1340 @@
+
+PHASE 1 — DATA VALIDATION AND RELATIONSHIP COMPLETION REPORT
+
+Project: Brazilian E-Commerce (Olist) Analytics
+Database: olist_analytics
+Database Platform: MySQL 8.0
+Phase: Phase 1 — Data Validation and Relationship Checks
+
+=====================================================
+
+PHASE 1 OVERVIEW
+=====================================================
+
+Phase 1 focused on validating the imported Customers, Orders, Order Items, and Payments tables. The work included row-count checks, schema and data-type inspection, missing-value checks, identifier uniqueness, duplicate detection, value-range validation, timestamp investigations, and cross-table relationship checks.
+
+The purpose was to assess whether the imported tables were suitable for downstream analytics while documenting source-data issues without making unsupported corrections.
+
+SQL documentation files:
+
+01_phase1_data_quality_checks.sql
+Contains table-level validation checks for Customers, Orders, Order Items, and Payments.
+
+02_phase1_relationship_checks.sql
+Contains cross-table relationship checks and related reconciliations.
+
+Original backup file:
+
+R.Sitarambabaji
+
+The original backup file, R.Sitarambabaji, is retained unchanged. The consolidated validation scripts are maintained separately.
+
+Database table: olist_customers
+Source file: olist_customers_dataset.csv
+
+2.1 Row Count
+
+Imported row count: 99,441
+
+Reference row count: 99,441
+
+Result: The counts match the reference source-data count used for validation.
+
+Limitation: A complete row-by-row comparison between the local CSV and the database table remains pending.
+
+2.2 Column Structure and Data Types
+
+customer_id — VARCHAR(50)
+
+customer_unique_id — VARCHAR(50)
+
+customer_zip_code_prefix — VARCHAR(5)
+
+customer_city — VARCHAR(100)
+
+customer_state — CHAR(2)
+
+All five columns were reviewed. The ZIP-prefix column was changed from INT to VARCHAR(5) to preserve leading zeros.
+
+2.3 Missing Values
+
+Total records: 99,441
+
+SQL NULL values across the five columns: 0
+
+Blank state values: 0
+
+Blank ZIP-prefix values: 0
+
+Result: No missing or blank values were identified in the checks performed.
+
+2.4 Identifier Uniqueness and Duplicate Records
+
+Distinct customer_id values: 99,441
+
+Duplicate customer_id count: 0
+
+Distinct customer_unique_id values: 96,096
+
+Repeated customer_unique_id occurrences beyond the first: 3,345
+
+Exact duplicate customer records across all five columns: 0
+
+Result: customer_id is unique in the table. Repeated customer_unique_id values are not automatically errors because the same underlying customer may be associated with multiple customer records.
+
+2.5 State and ZIP-Prefix Validation
+
+Distinct state/DF codes observed: 27
+
+NULL, blank, or unexpected state codes: 0
+
+NULL or blank ZIP prefixes: 0
+
+ZIP prefixes not matching exactly five numeric characters: 0 after the previous correction
+
+A leading-zero ZIP-prefix example was checked against the source CSV. The column was stored as VARCHAR(5) to preserve the value's format.
+
+Limitations:
+
+The correction has not been reconciled row by row against the entire source file.
+
+The five-digit numeric format check validates structure, not official Brazilian postal-address validity.
+
+2.6 Customers Conclusion
+
+Core customer-table validation was completed. The row count matches the reference count, customer IDs are unique, no exact duplicate records were found, and the missing-value, state-code, and ZIP-prefix format checks passed.
+
+A complete row-by-row reconciliation with the local CSV remains pending.
+
+Database table: olist_orders_dataset
+Source file: olist_orders_dataset.csv
+
+Validation status: Core validation completed, with documented source-data quality issues.
+
+3.1 Row Count
+
+MySQL table row count: 99,441
+
+Source CSV data-row count: 99,441
+
+Result: Row counts match.
+
+3.2 Column Structure and Data Types
+
+The table contains eight columns:
+
+order_id — VARCHAR(100)
+
+customer_id — VARCHAR(100)
+
+order_status — VARCHAR(100)
+
+order_purchase_timestamp — DATETIME
+
+order_approved_at — DATETIME
+
+order_delivered_carrier_date — DATETIME
+
+order_delivered_customer_date — DATETIME
+
+order_estimated_delivery_date — DATETIME
+
+Identifier columns are stored as text, and timestamp columns use DATETIME.
+
+3.3 Missing Values
+
+Column | Missing values
+order_id | 0
+customer_id | 0
+order_status | 0
+order_purchase_timestamp | 0
+order_approved_at | 160
+order_delivered_carrier_date | 1,783
+order_delivered_customer_date | 2,965
+order_estimated_delivery_date | 0
+
+Missing timestamps vary by order status and fulfillment stage. They were retained rather than filled with invented dates.
+
+3.4 Identifier Uniqueness and Duplicate Records
+
+Total records: 99,441
+
+Distinct order_id values: 99,441
+
+Duplicate or missing order IDs: 0
+
+Exact duplicate rows across all eight columns: 0
+
+Result: The order identifier is unique and complete in the imported table.
+
+3.5 Order Status Validation
+
+Observed status distribution:
+
+delivered: 96,478
+
+shipped: 1,107
+
+canceled: 625
+
+unavailable: 609
+
+invoiced: 314
+
+processing: 301
+
+created: 5
+
+approved: 2
+
+Total: 99,441 records.
+
+Eight distinct statuses were identified. No missing, blank, or unexpected status values were found. Grouped status counts reconcile to the table row count.
+
+3.6 Timestamp Ranges
+
+Observed timestamp ranges included:
+
+Earliest purchase: 2016-09-04
+
+Latest purchase: 2018-10-17
+
+Earliest customer delivery: 2016-10-11
+
+Latest customer delivery: 2018-10-17
+
+Earliest estimated delivery: 2016-09-30
+
+Latest estimated delivery: 2018-11-12
+
+No purchase timestamps were identified outside the broad validation period of September 2016 through November 2018.
+
+3.7 Timestamp Chronology and Source-Data Findings
+
+Carrier timestamp earlier than approval timestamp:
+
+1,350 delivered orders had a carrier timestamp earlier than the approval timestamp.
+
+9 shipped orders had the same chronology issue.
+
+Two delivered-order examples were compared against the source CSV, and the timestamps matched.
+
+Customer delivery earlier than carrier timestamp:
+
+23 delivered orders had a customer-delivery timestamp earlier than the carrier timestamp.
+
+Inspected examples were consistent with the source CSV.
+
+Delivery later than estimated date:
+
+7,826 delivered orders had a customer-delivery timestamp later than the estimated delivery date.
+
+This represents approximately 8.11% of delivered orders.
+
+Canceled orders with fulfillment timestamps:
+
+75 canceled orders had a carrier timestamp.
+
+6 canceled orders had a customer-delivery timestamp.
+
+All six also had a carrier timestamp.
+
+The six records were checked against the source CSV, and their timestamps matched the source.
+
+These anomalies were retained for transparency and further investigation. A source match for inspected examples does not establish that every anomalous record was individually checked.
+
+3.8 Orders Conclusion
+
+The table passed the row-count, identifier uniqueness, status validation, and timestamp-range checks performed. Missing fulfillment timestamps and chronology inconsistencies remain documented source-data quality issues. These should be considered when analyzing delivery performance and order fulfillment.
+
+No order records were deleted, and no anomalous timestamps were overwritten or filled with assumed values.
+
+Database table: olist_order_items_dataset
+Source file: olist_order_items_dataset.csv
+
+Validation status: Core table and relationship checks completed, with documented source-data anomalies.
+
+4.1 Row Count and Structure
+
+MySQL row count: 112,650
+
+Source CSV data-row count: 112,650
+
+Number of columns: 7
+
+Missing values found in the seven original columns: 0
+
+Duplicate (order_id, order_item_id) combinations: 0
+
+4.2 Column Structure and Data Types
+
+order_id — VARCHAR(100)
+
+order_item_id — INT NOT NULL
+
+product_id — VARCHAR(100)
+
+seller_id — VARCHAR(100)
+
+shipping_limit_date — DATETIME
+
+price — DECIMAL(10,2) NOT NULL
+
+freight_value — DECIMAL(10,2) NOT NULL
+
+The order_item_id column was converted from VARCHAR to INT after validation of positive whole-number values from 1 through 21.
+
+The price and freight_value columns were converted from DOUBLE to DECIMAL(10,2) after validating their ranges and checking that no values had more than two decimal places.
+
+4.3 Numeric Validation
+
+Minimum price: 0.85
+
+Maximum price: 6,735.00
+
+Minimum freight value: 0.00
+
+Maximum freight value: 409.68
+
+Negative prices: 0
+
+Negative freight values: 0
+
+Zero prices: 0
+
+Zero freight values: 383
+
+Values flagged for more than two decimal places: 0
+
+Zero freight values were retained because a zero value is not automatically a data error.
+
+4.4 Shipping-Limit Date Anomalies
+
+Four records had shipping_limit_date values in 2020. These records were inspected and matched the original CSV at the displayed timestamp precision.
+
+The associated order purchase timestamps were in 2017, producing gaps of approximately 1,052–1,056 days. The records were retained without modification.
+
+4.5 Order Item Integrity
+
+Distinct orders represented in Order Items: 98,666
+
+Orders without matching item records: 775
+
+Orders with items: 98,666
+
+Minimum items per order: 1
+
+Maximum items per order: 21
+
+Average items per order: approximately 1.14
+
+Unmatched item rows without a corresponding order: 0
+
+Orders without item records by status:
+
+unavailable: 603
+
+canceled: 164
+
+created: 5
+
+invoiced: 2
+
+shipped: 1
+
+Total orders without items: 775.
+
+All eight orders in the created, invoiced, and shipped categories were checked against the original CSV files. They existed in the Orders source CSV and had no matching rows in the Order Items source CSV. The remaining 767 unavailable/canceled orders were not individually verified against both source files.
+
+4.6 Final Integrity Check
+
+The table retained all 112,650 rows after the data-type changes. The grouped per-order item counts reconciled to the total item-row count.
+
+Order Items conclusion: Core validation was completed. The composite key is unique, numeric values passed the checks performed, and the relationship to Orders showed no unmatched item rows. Four unusual shipping-limit dates were documented and retained.
+
+Product and seller relationship checks remain outside the completed scope of this report.
+
+Database table: olist_order_payments_dataset
+Source file: olist_order_payments_dataset.csv
+
+5.1 Row Count and Missing Values
+
+Imported row count: 103,886
+
+SQL NULL values across the five columns: 0
+
+Blank order_id values: 0
+
+Blank payment_type values: 0
+
+The payment table contains multiple payment records for some orders. Payment-row counts should not be treated as unique-order counts.
+
+5.2 Payment Types and Values
+
+Payment type — Records — Total payment value
+
+credit_card — 76,795 — $12,542,084.19
+
+boleto — 19,784 — $2,869,361.27
+
+voucher — 5,775 — $379,436.87
+
+debit_card — 1,529 — $217,989.79
+
+not_defined — 3 — $0.00
+
+Total payment value: $16,008,872.12.
+
+Credit card was the largest payment category by both record count and total value.
+
+5.3 Numeric and Sequence Validation
+
+Negative payment values: 0
+
+Zero-value payment records: 9
+
+Values flagged for more than two decimal places: 0
+
+Non-positive payment sequence values: 0
+
+Zero installment values: 2
+
+All nine zero-value payment records were checked against the source CSV. The three not_defined records had zero payment values and were linked to canceled orders. The six zero-value voucher records were also source-verified.
+
+The two records with zero installments were checked against the source CSV. Two zero-payment records had positive installment counts. These cases were retained and documented rather than changed based on assumptions.
+
+5.4 Payment-to-Order Structure
+
+Total payment rows: 103,886
+
+Distinct orders represented in Payments: 99,440
+
+Additional payment rows beyond one per order: 4,446
+
+Orders with multiple payment rows: 2,961
+
+Maximum payment rows for one order: 29
+
+Duplicate (order_id, payment_sequential) pairs: 0
+
+Payment rows without a matching order: 0
+
+The Payments-to-Orders join preserved all 103,886 payment rows.
+
+Payments conclusion: The row count, missing-value checks, payment sequence checks, numeric checks, and Orders relationship checks passed as documented. Multiple payment rows per order are part of the observed data structure and should not be treated as duplicates without considering payment sequence.
+
+Relationship SQL file:
+02_phase1_relationship_checks.sql
+
+The file contains nine checks organized by relationship and reconciliation purpose.
+
+Check 1 — Payments → Orders
+
+Purpose: Find payment rows without a matching order.
+Previously observed result: 0 unmatched payment rows.
+
+Check 2 — Payments → Orders
+
+Purpose: Compare payment-row count with matching join-row count.
+Previously observed result: Both counts equal 103,886.
+
+Check 3 — Orders → Customers
+
+Purpose: Find orders without a matching customer.
+Previously observed result: 0 unmatched orders.
+
+Check 4 — Orders → Customers
+
+Purpose: Compare order-row count with matching join-row count.
+Previously observed result: Both counts equal 99,441.
+
+Check 5 — Orders → Order Items
+
+Purpose: Count orders without matching item records.
+Previously observed result: 775 orders without items.
+
+Check 6 — Orders → Order Items
+
+Purpose: Summarize orders without items by order status.
+Previously observed results:
+
+unavailable: 603
+
+canceled: 164
+
+created: 5
+
+invoiced: 2
+
+shipped: 1
+
+Check 7 — Order Items → Orders
+
+Purpose: Find item rows without a matching order.
+Previously observed result: 0 unmatched item rows.
+
+Check 8 — Orders → Order Items
+
+Purpose: Summarize item counts per order.
+Previously observed results:
+
+Orders with items: 98,666
+
+Minimum items per order: 1
+
+Maximum items per order: 21
+
+Average items per order: approximately 1.14
+
+Check 9 — Order Items
+
+Purpose: Reconcile total item rows with grouped item counts.
+Expected result: Both counts equal 112,650.
+
+Documentation note: The checks have been consolidated into the relationship SQL file. Previously observed results are recorded here; adding a query to the file does not by itself constitute a new execution.
+
+File 1: 01_phase1_data_quality_checks.sql
+
+Purpose: Table-level validation checks for Customers, Orders, Order Items, and Payments.
+
+File 2: 02_phase1_relationship_checks.sql
+
+Purpose: Cross-table relationship checks and related reconciliations.
+
+Original backup: R.Sitarambabaji
+
+The original backup file R.Sitarambabaji is retained unchanged. Do not edit or overwrite this file.
+
+Validation policy:
+
+Do not rerun historical UPDATE or ALTER TABLE statements as part of the repeatable validation workflow.
+
+Do not modify or delete source records solely because a validation query flags an anomaly.
+
+Preserve missing timestamps where the source does not provide a value.
+
+Investigate unexpected results against the source CSV before making data changes.
+
+Keep table-level checks and relationship checks organized to minimize unnecessary duplication.
+
+Distinguish checks previously executed from checks that have only been added to a saved script.
+
+Core table validation has been completed for Customers, Orders, Order Items, and Payments.
+
+Key validated row counts:
+
+Customers: 99,441
+
+Orders: 99,441
+
+Order Items: 112,650
+
+Payments: 103,886
+
+Key findings:
+
+Order and customer identifiers were validated for uniqueness in their respective tables.
+
+No exact duplicate customer records or exact duplicate order records were found in the checks performed.
+
+The Order Items composite key (order_id, order_item_id) was unique.
+
+Payments-to-Orders and Orders-to-Customers checks found no unmatched records.
+
+Order Items-to-Orders checks found no unmatched item rows.
+
+Orders without item records were identified and classified by status.
+
+Missing timestamps, timestamp chronology anomalies, late deliveries, unusual shipping-limit dates, and exceptional payment values were documented.
+
+Inspected anomalies were retained when they matched the source CSV rather than being silently corrected.
+
+Full row-by-row comparison of the Customers table against its local source CSV remains pending.
+
+Product and seller relationship validation remains outside the completed scope described here.
+
+Overall status: Phase 1 core validation and relationship documentation are consolidated. The work establishes a documented baseline for downstream analysis while preserving source-data anomalies and identifying remaining validation limitations.
+
+Next planned activity: Begin validation of the Order Reviews table after reviewing and saving the Phase 1 documentation and SQL files.
+
+
+
+
+
+# Olist Order Reviews — Data Documentation Report
+
+## 1. Overview
+
+The Order Reviews dataset contains customer ratings and written feedback associated with orders in the Olist Brazilian E-Commerce dataset. It supports analysis of customer satisfaction, review patterns, and potential relationships between customer feedback and order experiences.
+
+| Attribute | Details |
+|---|---|
+| Database | `olist_analytics` |
+| Staging table | `olist_order_reviews_stage` |
+| Source file | `olist_order_reviews_dataset.csv` |
+| Total records | 99,224 |
+| Total columns | 7 |
+| Review score range | 1–5 |
+| Review creation date range | October 2, 2016 – August 31, 2018 |
+
+## 2. Data Import and Preparation
+
+The source CSV was imported into `olist_order_reviews_stage` using MySQL `LOAD DATA LOCAL INFILE`.
+
+The MySQL Workbench Table Data Import Wizard initially loaded only a small subset of the records. Alternative CSV import configurations were tested to investigate the problem. The successful staging import loaded 99,224 records.
+
+The date/time fields were retained as `VARCHAR(30)` in the staging table to preserve the imported source values during validation.
+
+Trailing carriage returns were removed from `review_answer_timestamp`, and a subsequent check confirmed that no trailing carriage returns remained.
+
+## 3. Data-Quality Assessment
+
+The following validations were completed against the staging table.
+
+| Validation | Result | Assessment |
+|---|---:|---|
+| Total records | 99,224 | Import count established |
+| Missing or blank review IDs | 0 | Passed |
+| Missing or blank order IDs | 0 | Passed |
+| Missing review scores | 0 | Passed |
+| Invalid review scores | 0 | Passed |
+| Invalid review creation dates | 0 | Passed |
+| Invalid answer timestamps | 0 | Passed |
+| Answer timestamps before review creation | 0 | Passed |
+| Exact duplicate records | 0 | Passed |
+| Review rows without a matching order | 0 | Passed |
+| Trailing carriage returns after cleanup | 0 | Passed |
+
+## 4. Review Score Distribution
+
+| Review score | Records | Percentage |
+|---|---:|---:|
+| 1 star | 11,424 | 11.51% |
+| 2 stars | 3,151 | 3.18% |
+| 3 stars | 8,179 | 8.24% |
+| 4 stars | 19,142 | 19.29% |
+| 5 stars | 57,328 | 57.78% |
+| **Total** | **99,224** | **100.00%** |
+
+### Key observation
+
+Ratings of four or five stars account for 76,470 records (77.07%). Ratings of one or two stars account for 14,575 records (14.69%).
+
+This describes the distribution of recorded ratings; it does not by itself establish the overall satisfaction of every Olist customer, because not every customer necessarily submitted a review.
+
+## 5. Missing Written Feedback
+
+| Field | Missing or blank records | Percentage |
+|---|---:|---:|
+| `review_comment_title` | 87,658 | 88.34% |
+| `review_comment_message` | 58,256 | 58.71% |
+
+Review titles and written comments are optional. Their absence was documented rather than automatically treated as a data defect.
+
+Analyses using written feedback will have fewer usable records than analyses using review scores. Any text-based conclusions should state the number of comments analyzed.
+
+## 6. Review Identifier Assessment
+
+The table contains 99,224 rows and 98,410 distinct `review_id` values.
+
+The investigation identified 789 repeated review IDs affecting 1,603 rows:
+
+- 764 review IDs appeared twice.
+- 25 review IDs appeared three times.
+- All 789 repeated IDs were associated with multiple distinct order IDs.
+- The repeated-ID content consistency check found no differences among records sharing each repeated ID.
+- No fully identical records across all seven columns were found.
+
+The cause of the repeated identifiers has not been established. The records were retained rather than deleted.
+
+**Decision:** Do not treat `review_id` as a unique row identifier in this staging dataset without further investigation.
+
+## 7. Relationship to Orders
+
+The review dataset contains 98,673 distinct order IDs, and every review order ID matched an order in `olist_orders_dataset`.
+
+| Review records per order | Number of orders |
+|---|---:|
+| One record | 98,126 |
+| Two records | 543 |
+| Three records | 4 |
+| **Total distinct orders** | **98,673** |
+
+The four orders with three review records each were inspected. Their records were distinct and were retained.
+
+Analytical queries must distinguish between counting review records and counting distinct reviewed orders, because these measures produce different totals.
+
+## 8. Date and Timestamp Findings
+
+| Field | Earliest value | Latest value |
+|---|---|---|
+| `review_creation_date` | 2016-10-02 00:00:00 | 2018-08-31 00:00:00 |
+| `review_answer_timestamp` | 2016-10-07 18:32:28 | 2018-10-29 12:27:35 |
+
+All date values passed the implemented format and validity checks. No answer timestamp occurred before its associated review creation date.
+
+The fields remain strings in the staging table. For response-time calculations and time-series analysis, they should be converted to appropriate date/time types in a downstream analytical layer.
+
+## 9. Preparation Decisions
+
+The following decisions were made during preparation:
+
+1. Retained all 99,224 imported records.
+2. Preserved optional review title and message fields, including missing values.
+3. Removed trailing carriage returns from answer timestamps.
+4. Retained repeated review IDs because their cause was not established.
+5. Retained multiple review records associated with the same order.
+6. Confirmed that every review order ID matched the Orders dataset.
+7. Preserved the staging table's original text-based date/time representation.
+
+## 10. Limitations and Recommended Next Steps
+
+- Investigate repeated `review_id` values before defining a unique key.
+- Convert timestamps in a separate analytical table or view before calculating response durations.
+- Define whether each analysis operates at the review-record level or the distinct-order level.
+- Combine reviews with order status and delivery information to investigate possible relationships with customer experience.
+- Report the sample size for any analysis based on written comments.
+- Avoid making causal claims about delivery performance or satisfaction from rating distributions alone.
+
+## 11. Conclusion
+
+The Order Reviews staging dataset contains 99,224 records and passed the implemented core checks for missing identifiers, valid rating values, date formats, exact duplicates, and relationships to Orders.
+
+Two important characteristics require care in downstream analysis: repeated review IDs and multiple review records associated with some orders. These records were retained, and the limitations have been documented to support transparent, reproducible analysis.
+
+**Database:** `olist_analytics`  
+**Table:** `olist_order_reviews_stage`  
+**Documentation status:** Prepared from the recorded import and validation results.
+
+
+
+# Olist Products — Data Documentation Report
+
+## 1. Overview
+
+The Products dataset contains product-level information for items sold through the Olist Brazilian E-Commerce platform. It describes product categories, descriptive attributes, photographs, weight, and physical dimensions. The dataset supports product catalog analysis, order-item analysis, and investigations into product characteristics that may relate to shipping and customer experience.
+
+| Attribute | Details |
+|---|---|
+| Database | `olist_analytics` |
+| Staging table | `olist_products_stage` |
+| Production table | `olist_products` |
+| Source file | `olist_products_dataset.csv` |
+| Total records in production table | 32,951 |
+| Distinct product IDs | 32,951 |
+| Total columns | 9 |
+| Storage engine | InnoDB |
+| Character set | `utf8mb4` |
+| Collation | `utf8mb4_0900_ai_ci` |
+
+The production table contains one row per distinct product ID based on the recorded validation results. All nine columns are nullable in the supplied table definition, and no primary key or other constraints are declared in that definition.
+
+## 2. Data Import and Preparation
+
+The source CSV was imported into `olist_products_stage` using MySQL `LOAD DATA LOCAL INFILE`.
+
+The initial import and subsequent validation revealed missing values in several descriptive attributes. A backup table and a test staging table were created during troubleshooting. Alternative import configurations were evaluated to investigate how blank CSV fields were being represented in MySQL.
+
+The corrected import used user-defined variables and `NULLIF()` to convert empty source fields into SQL `NULL` values. A rebuild table was subsequently created and populated from the corrected test table. The staging table was replaced through a table-renaming operation, with the former staging table retained under an old-table name as part of the historical workflow.
+
+The production table, `olist_products`, uses corrected column names for two source attributes:
+
+- `product_name_length`
+- `product_description_length`
+
+The original staging schema used the source-style spellings `product_name_lenght` and `product_description_lenght`. These spelling differences should be accounted for when reviewing historical SQL statements.
+
+## 3. Data-Quality Assessment
+
+The following findings were established during the import and validation workflow.
+
+| Validation | Recorded result | Assessment |
+|---|---:|---|
+| Production records | 32,951 | Recorded baseline |
+| Distinct product IDs | 32,951 | One row per product ID |
+| Missing product IDs | 0 | Passed |
+| Products represented in order items | All 32,951 product IDs matched | Relationship check passed |
+| Order-item product IDs without a matching product | 0 | Relationship check passed |
+| Missing product category values | 610 | Documented |
+| Missing product name lengths | 610 | Documented |
+| Missing product description lengths | 610 | Documented |
+| Missing product photo counts | 610 | Documented |
+| Missing weight or dimension values | 2 observed in the earlier investigation | Requires field-specific interpretation |
+| Zero product weights | 4 genuine zero values recorded during investigation | Retained for review |
+
+The missing descriptive values were investigated during staging preparation. Blank source fields were handled as missing values rather than automatically being interpreted as meaningful zeroes.
+
+The missing category and descriptive-attribute counts reflect recorded investigation results. The precise final distribution of missing weights and dimensions should be distinguished from the earlier staging observations, since the investigation included more than one staging version.
+
+## 4. Product Attribute Profile
+
+The dataset includes nine attributes covering product identification, categorization, descriptive metadata, and physical characteristics.
+
+| Attribute group | Fields | Purpose |
+|---|---|---|
+| Identification | `product_id` | Identifies a product |
+| Categorization | `product_category_name` | Associates the product with a category |
+| Descriptive metadata | `product_name_length`, `product_description_length`, `product_photos_qty` | Describes listing text and photograph counts |
+| Physical characteristics | `product_weight_g`, `product_length_cm`, `product_height_cm`, `product_width_cm` | Describes product weight and dimensions |
+
+The source field names for the name and description lengths contain the original spelling `lenght`. The production table uses corrected spellings. These fields represent numeric measurements or counts, not free-form text.
+
+A complete distribution of categories, descriptive lengths, photograph counts, weights, and dimensions has not been reproduced here because verified aggregate results for those distributions are not available in the recorded findings.
+
+## 5. Missing Values and Zero Measurements
+
+Missing values were identified in the following descriptive attributes:
+
+| Field | Recorded missing values | Interpretation |
+|---|---:|---|
+| `product_category_name` | 610 | Product category was not supplied |
+| `product_name_length` | 610 | Name-length value was missing |
+| `product_description_length` | 610 | Description-length value was missing |
+| `product_photos_qty` | 610 | Photograph count was missing |
+
+Two additional missing weight or dimension values were observed during the earlier investigation. The precise fields and their final production-table status should not be inferred solely from that earlier staging result.
+
+Four zero weight values were identified as genuine zero values during the investigation. Zero and `NULL` must not be treated as interchangeable:
+
+- `NULL` indicates that a value is missing or unknown.
+- Zero is a recorded numeric value and may have a different meaning.
+- A zero measurement may require investigation, but it should not automatically be replaced with `NULL` or removed.
+
+Missing category values should also be considered explicitly in category-level reporting so that products with unknown categories are not silently excluded.
+
+## 6. Product Identifier Assessment
+
+The production table contains 32,951 records and 32,951 distinct product IDs, according to the recorded validation results.
+
+| Identifier check | Result |
+|---|---:|
+| Total product records | 32,951 |
+| Distinct product IDs | 32,951 |
+| Missing product IDs | 0 |
+| Duplicate product IDs indicated by these counts | 0 |
+
+The recorded counts support the use of `product_id` as the product-level identifier in analytical queries.
+
+However, the supplied production table definition does not declare `product_id` as a primary key or unique constraint. The observed uniqueness of the current data is therefore a validation finding, not a database-enforced guarantee.
+
+## 7. Relationship to Order Items
+
+The Products dataset was checked against `olist_order_items_dataset`, which contains product IDs associated with individual order items.
+
+The recorded validation found that all 32,951 product IDs in the Products table matched product IDs in the Order Items dataset. No order-item product IDs were found without a matching product record, and no Products records were found without a corresponding order-item reference.
+
+This relationship supports joining the tables through `product_id`.
+
+The relationship is not one-to-one: a product can appear in many order-item records because the same product may be purchased across multiple orders or included in multiple order items.
+
+Analytical queries should distinguish between:
+
+- **Product count:** the number of distinct products.
+- **Order-item count:** the number of individual product lines purchased.
+- **Units sold:** the sum of item quantities, where the relevant quantity field is available.
+
+These measures answer different business questions and should not be substituted for one another.
+
+## 8. Schema and Technical Findings
+
+The supplied production table definition is:
+
+| Column | Data type | Nullable |
+|---|---|---|
+| `product_id` | `VARCHAR(50)` | Yes |
+| `product_category_name` | `VARCHAR(100)` | Yes |
+| `product_name_length` | `INT` | Yes |
+| `product_description_length` | `INT` | Yes |
+| `product_photos_qty` | `INT` | Yes |
+| `product_weight_g` | `INT` | Yes |
+| `product_length_cm` | `INT` | Yes |
+| `product_height_cm` | `INT` | Yes |
+| `product_width_cm` | `INT` | Yes |
+
+The table uses InnoDB, `utf8mb4`, and the `utf8mb4_0900_ai_ci` collation.
+
+The integer fields are appropriate for the source's count and whole-unit measurement attributes. The weight is represented in grams, while the physical dimensions are represented in centimeters.
+
+All columns are declared nullable. Because no primary key, unique constraint, or foreign key is shown in the supplied `CREATE TABLE` definition, integrity checks currently depend on data validation and the logic used in analytical queries.
+
+## 9. Preparation Decisions
+
+The following preparation decisions are documented from the Products workflow:
+
+1. Retained the product records rather than deleting products with missing descriptive attributes.
+2. Investigated blank source fields and used `NULLIF()` in the corrected import workflow to represent empty values as SQL `NULL`.
+3. Used staging, backup, test, and rebuild tables to investigate and correct import issues.
+4. Retained the original staging table as a historical artifact under an old-table name during the table-replacement workflow.
+5. Used corrected column spellings for product name and description lengths in the production table.
+6. Retained genuine zero values for investigation rather than automatically converting them into missing values.
+7. Validated product identifiers and the relationship between Products and Order Items.
+8. Kept missing category and descriptive values visible for downstream handling rather than inventing replacements.
+
+## 10. Limitations and Recommended Next Steps
+
+- Consider adding a primary key or unique constraint on `product_id` after confirming the intended production-table design and validating the data.
+- Consider enforcing referential integrity in a downstream analytical model if the table architecture supports it.
+- Review the 610 records with missing category and descriptive attributes before category-specific analysis.
+- Verify the final production-table counts for missing weights and dimensions independently of historical staging counts.
+- Investigate the four zero weight values to establish whether they are valid source values or require special handling.
+- Consider mapping Portuguese category names to readable business labels in a separate dimension or reporting layer, while preserving the original category field.
+- Use explicit rules for missing category values in dashboards so that unknown categories remain visible.
+- Confirm the unit of each physical measurement before performing shipping or product-size analysis.
+- Keep source, staging, and production naming consistent in documentation and SQL comments.
+- Preserve validation queries and record their results so that future changes can be audited.
+
+## 11. Conclusion
+
+The Olist Products production table contains 32,951 records representing 32,951 distinct product IDs. Recorded relationship checks found complete coverage between the Products and Order Items datasets in both directions.
+
+The import workflow required investigation of blank CSV values and the creation of test, backup, and rebuild tables. Missing product category and descriptive attributes remain important considerations, and zero measurements should be assessed separately from missing values.
+
+The production schema contains nine nullable columns and does not declare a primary key or other constraints in the supplied table definition. These findings should inform future data modeling, validation, and dashboard development.
+
+**Database:** `olist_analytics`  
+**Staging table:** `olist_products_stage`  
+**Production table:** `olist_products`  
+**Documentation status:** Draft prepared from recorded import history, schema information, and prior validation findings. Final missing-value counts should be reconfirmed if this report is used as a formal release record.
+
+
+
+
+# Olist Sellers — Documentation Report
+
+**Project:** Olist E-commerce Analytics  
+**Database:** `olist_analytics`  
+**Table:** `olist_sellers_dataset`  
+**Total Records:** 3,095  
+**Total Columns:** 4  
+**Primary Key:** `seller_id`
+
+## 1. Table Overview
+
+The `olist_sellers_dataset` table contains seller information for the Olist e-commerce platform. It identifies sellers and records their postal-code prefixes, cities, and Brazilian state codes.
+
+This table supports seller-level analysis and joins with `olist_order_items_dataset` to examine seller participation, order-item distribution, and geographic coverage.
+
+## 2. Column Definitions
+
+| Column Name | Data Type | Nullable | Key | Description |
+|---|---|---|---|---|
+| `seller_id` | `VARCHAR(50)` | No | PK | Unique identifier assigned to each seller. |
+| `seller_zip_code_prefix` | `VARCHAR(5)` | Yes | — | Five-character postal-code prefix associated with the seller's location. Stored as text to preserve leading zeros. |
+| `seller_city` | `VARCHAR(100)` | Yes | — | City associated with the seller. |
+| `seller_state` | `CHAR(2)` | Yes | — | Two-character Brazilian state abbreviation. |
+
+**Note:** The `seller_id` column was changed to `NOT NULL` when the primary key was added. The other three columns remain nullable at the schema level, although the completed checks found no NULL or blank values in the current dataset.
+
+## 3. Primary Key
+
+The table uses `seller_id` as its primary key.
+
+- Each seller is identified by a unique `seller_id`.
+- Duplicate seller IDs were not detected in the completed checks.
+- No missing or blank seller IDs were detected.
+- A `BTREE` primary-key index was verified in MySQL Workbench.
+
+## 4. Data Quality Validation
+
+| Validation Check | Result | Status |
+|---|---|---|
+| Total row count | 3,095 | PASS |
+| NULL values across all four columns | 0 | PASS |
+| Blank values across all four columns | 0 | PASS |
+| Duplicate seller IDs | 0 | PASS |
+| Postal-code prefix length | All 3,095 have 5 characters | PASS |
+| Leading/trailing whitespace | 0 detected across all columns | PASS |
+| Primary key | `seller_id` successfully added | PASS |
+
+## 5. Relationship Validation
+
+The seller table was checked against `olist_order_items_dataset`.
+
+| Relationship Check | Result |
+|---|---|
+| Distinct sellers referenced by order items | 3,095 |
+| Unmatched seller IDs | 0 |
+| Sellers without associated order items | 0 |
+
+**Conclusion:** All 3,095 sellers were referenced by order items, and no unmatched seller identifiers or unreferenced sellers were found in the completed checks.
+
+## 6. Business Relevance
+
+This table supports several business and operational analyses:
+
+- **Seller geographic distribution:** Analyze seller coverage by city and state.
+- **Seller activity:** Identify sellers contributing to order items.
+- **Operational performance:** Combine seller records with order items and orders to investigate seller-level order volume and fulfillment patterns.
+- **Marketplace coverage:** Understand where sellers are located and how seller participation is distributed geographically.
+
+## 7. Data Preparation Summary
+
+The following work was completed on `olist_sellers_dataset`:
+
+1. Verified the imported dataset contains 3,095 records.
+2. Updated column data types to match the data's intended use.
+3. Checked postal-code prefix lengths and whitespace.
+4. Validated missing values, blank values, and seller ID uniqueness.
+5. Added `seller_id` as the primary key.
+6. Verified seller-to-order-item relationship coverage.
+
+The current table passed all the listed checks. The original imported table name remains `olist_sellers_dataset`; the data types and primary-key definition were updated directly on that table.
+
+## 8. Final Status
+
+**Status: Validated**
+
+The `olist_sellers_dataset` table contains 3,095 seller records, has appropriate column data types, and uses `seller_id` as its primary key. All documented data-quality and relationship checks passed.
+
+**Documentation note:** These results reflect the checks completed against the current database state. No claim is made that every possible data-quality issue has been tested.
+
+
+
+
+
+Table 8: Product Category Name Translation — Documentation Report
+
+Project: Olist E-commerce Analytics
+Database: olist_analytics
+Table: product_category_name_translation
+Total Records: 71
+Total Columns: 2
+
+1. Purpose
+
+The product_category_name_translation table maps Portuguese product category names to their English equivalents. It supports English-language reporting, product categorization, and analysis in the Olist E-commerce Analytics project.
+
+2. Import and Cleanup
+
+The table was imported into MySQL with two columns, both initially defined as TEXT and nullable.
+
+During schema validation, the first column name was found to contain unwanted UTF-8 BOM characters: ï»¿product_category_name.
+
+The column was renamed to product_category_name to establish a clean and consistent column name.
+
+The final column names are:
+
+product_category_name
+
+product_category_name_english
+
+3. Data Quality Validation
+
+Check
+
+Validation
+
+Result
+
+1
+
+Total row count
+
+71 records
+
+2
+
+Column structure
+
+2 columns; both TEXT, nullable
+
+3
+
+Sample record inspection
+
+Executed successfully
+
+4
+
+NULL and blank values
+
+0 NULLs and 0 blanks in both columns
+
+5
+
+Duplicate Portuguese category names
+
+0 duplicates
+
+6
+
+Duplicate English category names
+
+0 duplicates
+
+Check 4: NULL and Blank Value Results
+
+Validation
+
+Count
+
+Total records
+
+71
+
+NULL Portuguese category names
+
+0
+
+Blank Portuguese category names
+
+0
+
+NULL English category names
+
+0
+
+Blank English category names
+
+0
+
+Check 5: Duplicate Portuguese Category Names
+
+The duplicate-check query returned zero rows. No duplicate Portuguese category names were identified.
+
+Check 6: Duplicate English Category Names
+
+The duplicate-check query returned zero rows. No duplicate English category names were identified.
+
+4. Relationship Validation
+
+Relationship checks were conducted between product_category_name_translation and olist_products.
+
+Check
+
+Validation
+
+Result
+
+25
+
+Product categories without matching English translations
+
+2 categories; 13 product records affected
+
+26
+
+Translation records not referenced by any product
+
+0 rows
+
+27
+
+Portuguese categories mapped to multiple distinct English names
+
+0 rows
+
+Check 25: Translation Coverage Gaps
+
+Two Portuguese product categories in olist_products did not have matching records in the translation table.
+
+Portuguese category
+
+Affected product records
+
+portateis_cozinha_e_preparadores_de_alimentos
+
+10
+
+pc_gamer
+
+3
+
+Total
+
+13
+
+These results identify incomplete translation coverage affecting 13 product records. The missing translations should be investigated before modifying the source data.
+
+Check 26: Unused Translation Records
+
+The query returned zero rows. Every category in the translation table matched at least one category in olist_products.
+
+Check 27: Conflicting English Translations
+
+The query returned zero rows. No Portuguese category was mapped to multiple distinct English category names.
+
+5. Conclusion
+
+The table contains 71 records and two columns. The imported column-name issue was corrected, and all 71 records passed the NULL and blank-value checks. No duplicate Portuguese or English category names were identified.
+
+Relationship validation identified two Portuguese categories without matching English translations, affecting 13 product records. No unused translation records or conflicting English translations were found.
+
+Overall status: Data quality checks passed for missing values and duplicates. Two translation coverage gaps remain documented for follow-up.
+
+
+
+
+
+
+# Olist Geolocation Dataset — Data Quality & Relationship Report
+
+**Project:** Olist E-commerce Analytics  
+**Database:** `olist_analytics`  
+**Table:** `olist_geolocation_dataset`  
+**Source File:** `olist_geolocation_dataset.csv`  
+**Total Records:** 1,000,163  
+**Total Columns:** 5  
+
+## 1. Purpose
+
+The geolocation dataset contains postal-code prefixes and associated geographic information, including latitude, longitude, city, and state. It supports geographic analysis and postal-code matching with customer and seller records.
+
+## 2. Import and Schema
+
+The original table was dropped and recreated before the CSV was reimported. The file was loaded once after truncating the table to correct an accidental duplicate import.
+
+The final verified row count is **1,000,163 records**.
+
+| Column | Current Data Type | Nullable |
+|---|---|---|
+| `geolocation_zip_code_prefix` | VARCHAR(10) | YES |
+| `geolocation_lat` | TEXT | YES |
+| `geolocation_lng` | TEXT | YES |
+| `geolocation_city` | TEXT | YES |
+| `geolocation_state` | TEXT | YES |
+
+The postal-code prefix is retained as text to preserve leading zeros. No data-cleaning updates or duplicate deletions have been applied to the imported table.
+
+## 3. Data Quality Findings
+
+### 3.1 Missing Values
+
+The missing-value check returned zero for:
+- NULL postal-code prefixes
+- NULL latitude values
+- NULL longitude values
+- Missing or blank city values
+- Missing or blank state values
+
+**Finding:** No missing values were detected in the five columns tested.
+
+### 3.2 Coordinate Validation
+
+The latitude and longitude range checks reported:
+- Invalid latitude values: 0
+- Invalid longitude values: 0
+
+The coordinate-format checks reported:
+- Invalid latitude formats: 0
+- Invalid longitude formats: 0
+
+The values passed the numeric-format and geographic-range checks performed.
+
+### 3.3 Postal-Code Prefix Validation
+
+- Missing postal-code prefixes: 0
+- Prefixes with a length other than five characters: 0
+- Distinct postal-code prefixes: 19,015
+
+**Finding:** All postal-code prefixes passed the tested presence and length validations.
+
+### 3.4 State-Code Validation
+
+- Missing state values: 0
+- State codes with a length other than two characters: 0
+- State codes with leading/trailing whitespace or lowercase letters: None returned
+
+**Finding:** State-code presence, length, casing, and whitespace checks passed.
+
+### 3.5 City Validation
+
+- City values containing uppercase letters: None returned
+- City values with leading/trailing whitespace: 1 record
+
+The affected value was `salvador `, with one trailing space and a stored character length of 9.
+
+**Finding:** One city whitespace issue was identified. The raw record remains unchanged.
+
+### 3.6 Exact Duplicate Records
+
+The duplicate analysis grouped records by all five columns.
+
+| Metric | Result |
+|---|---:|
+| Total records | 1,000,163 |
+| Distinct complete records reported by the initial count query | 720,496 |
+| Duplicate groups | 131,544 |
+| Rows belonging to duplicate groups | 411,211 |
+| Excess duplicate records | 279,667 |
+
+The grouped calculation verified the excess duplicate count:
+
+411,211 − 131,544 = 279,667
+
+**Finding:** The dataset contains repeated complete records. These records have not been deleted. Duplicate handling should be decided during the creation of a cleaned table, after considering the project's intended geographic analysis.
+
+### 3.7 Geographic Distribution
+
+The state-level aggregation returned 26 state codes. State-level record totals were confirmed to match the overall table row count.
+
+| Metric | Result |
+|---|---:|
+| State codes returned | 26 |
+| State with the most records | SP |
+| SP geolocation records | 404,268 |
+| SP share of all records | Approximately 40.42% |
+
+**Finding:** São Paulo (`SP`) accounts for the largest share of geolocation records in the returned state distribution.
+
+## 4. Relationship Validation
+
+### 4.1 Customer Postal-Code Coverage
+
+The customer relationship checks used `olist_customers` and distinct postal-code prefixes from `olist_geolocation_dataset`.
+
+| Metric | Result |
+|---|---:|
+| Customer records | 99,441 |
+| Distinct customer postal-code prefixes | 14,994 |
+| Matched distinct prefixes | 14,837 |
+| Unmatched distinct prefixes | 157 |
+| Customer records with a matching prefix | 99,163 |
+| Customer records without a matching prefix | 278 |
+| Customer-record match rate | Approximately 99.72% |
+
+The 157 unmatched distinct prefixes were listed for investigation. An unmatched prefix does not automatically indicate invalid customer data; it may reflect incomplete geolocation coverage.
+
+### 4.2 Seller Postal-Code Coverage
+
+The seller relationship checks used `olist_sellers_dataset` and distinct postal-code prefixes from `olist_geolocation_dataset`.
+
+| Metric | Result |
+|---|---:|
+| Seller records | 3,095 |
+| Distinct seller postal-code prefixes | 2,246 |
+| Matched distinct prefixes | 2,239 |
+| Unmatched distinct prefixes | 7 |
+| Seller records with a matching prefix | 3,088 |
+| Seller records without a matching prefix | 7 |
+| Seller-record match rate | Approximately 99.77% |
+
+The seven unmatched seller prefixes were:
+
+`02285`, `07412`, `37708`, `71551`, `72580`, `82040`, and `91901`.
+
+Each unmatched prefix was associated with one seller record.
+
+### 4.3 Join Considerations
+
+The geolocation dataset contains multiple records for some postal-code prefixes. Joining it directly to customer or seller records on the prefix can multiply rows and inflate counts.
+
+For prefix-coverage analysis, the relationship checks used a subquery containing distinct geolocation prefixes. For geographic analysis, a cleaned or aggregated geolocation reference table may be appropriate, depending on the intended level of analysis.
+
+## 5. Recommended Next Steps
+
+1. Preserve `olist_geolocation_dataset` as the raw imported table.
+2. Create a separate cleaned table or transformation layer.
+3. Trim leading/trailing whitespace from city values in the cleaned layer.
+4. Decide on a documented strategy for exact duplicate records before removing or aggregating them.
+5. Consider converting latitude and longitude to suitable numeric data types in the cleaned table after validation.
+6. Investigate unmatched customer and seller prefixes before treating them as errors.
+7. Revalidate row counts, data types, and relationship coverage after cleaning.
+
+## 6. Conclusion
+
+The geolocation dataset contains 1,000,163 records and 19,015 distinct postal-code prefixes. The tested missing-value, coordinate-format, coordinate-range, postal-code, and state-code validations passed. One city whitespace issue and a substantial number of exact duplicate records were identified. Customer and seller prefix-coverage checks showed high match rates, while a small number of unmatched prefixes remain for investigation.
+
+The imported table remains unchanged. Findings in this report describe the verified checks performed on the current table and do not imply that the identified issues have already been corrected.
+
+

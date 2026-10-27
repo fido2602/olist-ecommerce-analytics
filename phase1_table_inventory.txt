@@ -1,0 +1,30 @@
+# Olist Flagship Project — Phase 1 Table Inventory
+
+Project: Olist E-commerce Analytics  
+Database:`olist_analytics`  
+Phase: Phase 1 — Build and Validate the Database
+
+## 1. Table Inventory
+
+| No. | MySQL Table | Imported Rows | Columns | Import Status |
+|---:|---|---:|---:|---|
+| 1 | `olist_customers` | 99,441 | 5 | Verified |
+| 2 | `olist_orders_dataset` | 99,441 | 8 | Verified |
+| 3 | `olist_order_items_dataset` | 112,650 | 7 | Verified |
+| 4 | `olist_order_payments_dataset` | 103,886 | 5 | Verified |
+| 5 | `olist_order_reviews_stage` | 99,224 | 7 | Verified |
+| 6 | `olist_products` | 32,951 | 9 | Verified |
+| 7 | `olist_sellers_dataset` | 3,095 | 4 | Verified |
+| 8 | `product_category_name_translation` | 71 | 2 | Verified |
+| 9 | `olist_geolocation_dataset` | 1,000,163 | 5 | Verified |
+
+## 2. Phase 1 Validation Summary
+
+- All nine tables have been imported and reviewed.
+- Table structures and data dictionaries have been documented.
+- Data-quality checks have been performed.
+- Relevant cross-table relationships have been checked.
+- Known anomalies and unmatched records have been documented.
+
+Phase 1 status: Complete  
+Next phase: Phase 2 — Data Modeling and Cleaning
