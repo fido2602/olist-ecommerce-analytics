@@ -116,11 +116,44 @@ These are investigation priorities supported by observed patterns, not claims th
 
 ## Project Deliverables
 
-- Interactive Power BI report
-- SQL scripts for data preparation, validation, and business analysis
-- Excel workbooks covering delivery, monthly trends, product categories, customer behavior, reviews, payments, and seller performance
-- KPI definitions and data-model documentation
-- Business findings and supporting project documentation
+### SQL Analysis
+- [SQL folder guide](SQL/README.md)
+- [Data import and cleanup](SQL/01_phase1_import_and_cleanup.sql)
+- [Relationship checks](SQL/02_phase1_relationship_checks.sql)
+- [Data quality checks](SQL/01_phase1_data_quality_checks.sql)
+- [Data modeling](SQL/modelling.sql)
+- [Business analysis queries](SQL/business_analysis.sql)
+
+### Excel Business Analysis
+- [Excel analysis guide](Excel%20Analysis/README.md)
+- [Delivery performance](Excel%20Analysis/Mission_4A_Delivery_Performance.xlsx)
+- [Monthly order trends](Excel%20Analysis/Mission_4B_Monthly_Order_Trends.xlsx)
+- [Product-category performance](Excel%20Analysis/Mission_4C_Product_Category_Performance%20.xlsx)
+- [Customer analysis](Excel%20Analysis/Mission_4D_Customer_Analysis.xlsx)
+- [Customer reviews](Excel%20Analysis/Mission_4E_Customer_Reviews.xlsx)
+- [Payment behavior](Excel%20Analysis/Mission_4F_Payment_Behavior_Analysis.xlsx)
+- [Individual seller performance](Excel%20Analysis/Mission_4G_Individual_Seller_Performance.xlsx)
+
+### Power BI
+- [Power BI folder guide](Power%20BI/README.md)
+- [Executive Overview screenshot](Power%20BI/Olist_Executive_Overview.png)
+- [Sales & Product Performance screenshot](Power%20BI/Olist_Sales_Product_Performance.png)
+- [Dashboard walkthrough video](Power%20BI/Olist_Dashboard_Walkthrough.mp4)
+
+The Power BI PBIX file is not included in this repository. The screenshots and walkthrough video provide a preview of the report.
+
+### Documentation
+- [Business analysis findings](business_analysis_findings.md)
+- [Data model documentation](data_model_documentation.md)
+- [KPI definitions](kpi_definitions.md)
+- [Phase 1 completion report](phase1_completion_report.txt)
+- [Phase 1 table inventory](phase1_table_inventory.txt)
+- [Phase 1 data dictionary](phase1_data_dictionary.csv)
+
+### Raw Data
+- [Raw Data README and dataset download instructions](Raw%20Data/README.md)
+
+The source CSV files are not currently stored in this repository; use the Raw Data README for the dataset source and setup instructions.
 
 ## Outcome
 
